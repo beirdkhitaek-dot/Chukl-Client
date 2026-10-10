@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "chuklclient",
+  "version": "${version}",
+  "name": "Chukl Client",
+  "description": "A custom client with a movable, resizable Click GUI. Right Shift opens it.",
+  "authors": ["Chukl"],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["com.chukl.client.ChuklClient"]
+  },
+  "depends": {
+    "fabricloader": ">=0.17.0",
+    "minecraft": "~1.21.11",
+    "java": ">=21",
+    "fabric-api": "*"
+  }
+}
