@@ -9,6 +9,12 @@ base {
     archivesName.set(property("archives_base_name") as String)
 }
 
+loom {
+    mixin {
+        defaultRefmapName.set("chuklclient-refmap.json")
+    }
+}
+
 repositories {
     mavenCentral()
 }

@@ -20,7 +20,13 @@ public class Example extends Module {
 Settings: `BoolSetting`, `NumberSetting`, `ModeSetting`, `ColorSetting`, `ButtonSetting`.
 They show up in the GUI and save to `config/chuklclient.json` automatically.
 A module that throws is disabled and logged instead of crashing the game.
-Not built yet: packet and 3D world-render hooks. They get added with the first module that needs them.
+3D and packet hooks (added in 1.6.0):
+```java
+@Override protected void onRender3D(Render3D r) { r.box(pos, fillArgb, lineArgb, Render3D.Mode.BOTH); r.line(x1,y1,z1, x2,y2,z2, argb, width); }
+@Override protected void onPacket(Packet<?> p) { }   // after the game handled chunk, light, block, join and respawn packets
+```
+Water Client modules can be dropped in as they are: extend `com.chukl.client.water.WModule`, use `water.Setting`, `water.RenderUtils`.
+Meteor-style addon modules go through `compat/` (see the donut modules for examples).
 
 Categories: COMBAT, MISC, DONUT, RENDER, CLIENT.
 

@@ -4,16 +4,24 @@
   "version": "${version}",
   "name": "Chukl Client",
   "description": "A custom client with a movable, resizable Click GUI. Right Shift opens it.",
-  "authors": ["Chukl"],
+  "authors": [
+    "Chukl"
+  ],
   "license": "MIT",
+  "icon": "assets/chuklclient/icon.png",
   "environment": "client",
   "entrypoints": {
-    "client": ["com.chukl.client.ChuklClient"]
+    "client": [
+      "com.chukl.client.ChuklClient"
+    ]
   },
   "depends": {
     "fabricloader": ">=0.17.0",
     "minecraft": "~1.21.11",
     "java": ">=21",
     "fabric-api": "*"
-  }
+  },
+  "mixins": [
+    "chuklclient.mixins.json"
+  ]
 }

@@ -25,7 +25,7 @@ public class ClickGuiScreen extends Screen {
     private static final int GRIP = 12, SB = 5;
     private int ROW = 16, SET = 14, NUM = 18;
 
-    private enum Kind { MODULE, BOOL, NUMBER, MODE, COLOR, COLOR_CH, BIND, BUTTON, EMPTY }
+    private enum Kind { MODULE, BOOL, NUMBER, MODE, COLOR, COLOR_CH, BIND, BUTTON, STRING, KEY, EMPTY }
 
     private static final class Row {
         Kind kind;
@@ -42,6 +42,8 @@ public class ClickGuiScreen extends Screen {
 
     private boolean bindKeyReleased;
     private Module bindTarget;
+    private StringSetting editing;
+    private KeybindSetting keyTarget;
 
     // drag state
     private Panel dragPanel;
@@ -115,6 +117,8 @@ public class ClickGuiScreen extends Screen {
                 else if (s instanceof NumberSetting) { out.add(row(Kind.NUMBER, m, s, 0, y, NUM)); y += NUM; }
                 else if (s instanceof ModeSetting) { out.add(row(Kind.MODE, m, s, 0, y, SET)); y += SET; }
                 else if (s instanceof ButtonSetting) { out.add(row(Kind.BUTTON, m, s, 0, y, SET)); y += SET; }
+                else if (s instanceof StringSetting) { out.add(row(Kind.STRING, m, s, 0, y, SET)); y += SET; }
+                else if (s instanceof KeybindSetting) { out.add(row(Kind.KEY, m, s, 0, y, SET)); y += SET; }
                 else if (s instanceof ColorSetting) {
                     out.add(row(Kind.COLOR, m, s, 0, y, SET));
                     y += SET;
@@ -164,6 +168,11 @@ public class ClickGuiScreen extends Screen {
             && GLFW.glfwGetKey(mc.getWindow().getHandle(), mod.getBind()) != GLFW.GLFW_PRESS) bindKeyReleased = true;
 
         if (mod.dim.get()) ctx.fill(0, 0, width, height, (mod.dimStrength.getInt() * 255 / 100) << 24);
+        com.chukl.client.modules.client.hud.LogoModule lg = com.chukl.client.core.ModuleManager.get(com.chukl.client.modules.client.hud.LogoModule.class);
+        if (lg != null && lg.isEnabled() && lg.inGui.get()) {
+            float ls = Math.max(24, lg.size.getInt() * 1.5f);
+            lg.draw(ctx, width - ls - 8, height - ls - 8, ls);
+        }
 
         Matrix3x2fStack st = ctx.getMatrices();
         st.pushMatrix();
@@ -267,6 +276,18 @@ public class ClickGuiScreen extends Screen {
                 String t = ms.name + ": " + ms.get();
                 txt(ctx, tr, mod.fit(tr, t, cw - 14), x + 10, ty, mod.settingText.get());
             }
+            case STRING -> {
+                StringSetting st = (StringSetting) r.s;
+                boolean ed = editing == st;
+                String v = st.get();
+                String t = st.name + ": " + (v.isEmpty() && !ed ? st.placeholder : v) + (ed && (System.currentTimeMillis() / 500) % 2 == 0 ? "_" : "");
+                txt(ctx, tr, mod.fit(tr, t, cw - 14), x + 10, ty, ed ? 0xFFFFFFFF : mod.settingText.get());
+            }
+            case KEY -> {
+                KeybindSetting ks = (KeybindSetting) r.s;
+                String t = ks.name + ": " + (keyTarget == ks ? "..." : ks.keyName());
+                txt(ctx, tr, mod.fit(tr, t, cw - 14), x + 10, ty, mod.settingText.get());
+            }
             case BUTTON -> {
                 ctx.fill(x + 8, ry + 1, x + cw - 4, ry + r.h - 1, mod.button.get());
                 String t = r.s.name;
@@ -319,6 +340,8 @@ public class ClickGuiScreen extends Screen {
         int btn = click.button();
 
         if (bindTarget != null) { bindTarget = null; return true; }
+        if (keyTarget != null) { keyTarget = null; return true; }
+        editing = null;
         if (in(lx, ly, lw - 20, 4, 16, 16)) { close(); return true; }
 
         Panel p = topPanelAt(lx, ly);
@@ -375,6 +398,11 @@ public class ClickGuiScreen extends Screen {
             case BOOL -> { if (btn == 0) { BoolSetting b = (BoolSetting) r.s; b.set(!b.get()); } }
             case MODE -> { ModeSetting ms = (ModeSetting) r.s; ms.cycle(btn == 1 ? -1 : 1); }
             case BUTTON -> { if (btn == 0) ((ButtonSetting) r.s).run(); }
+            case STRING -> { if (btn == 0) { editing = (StringSetting) r.s; keyTarget = null; bindTarget = null; } }
+            case KEY -> {
+                if (btn == 1) ((KeybindSetting) r.s).set(-1);
+                else { keyTarget = (KeybindSetting) r.s; editing = null; bindTarget = null; }
+            }
             case COLOR -> toggleKey(p, "C:" + r.m.name + ":" + r.s.name);
             case BIND -> { if (btn == 1) r.m.setBind(-1); else bindTarget = r.m; }
             case NUMBER, COLOR_CH -> {
@@ -462,8 +490,31 @@ public class ClickGuiScreen extends Screen {
     }
 
     @Override
+    public boolean charTyped(net.minecraft.client.input.CharInput input) {
+        if (editing != null && input.isValidChar()) {
+            editing.set(editing.get() + input.asString());
+            return true;
+        }
+        return super.charTyped(input);
+    }
+
+    @Override
     public boolean keyPressed(KeyInput input) {
         int key = input.getKeycode();
+        if (editing != null) {
+            if (key == GLFW.GLFW_KEY_ESCAPE || key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) editing = null;
+            else if (key == GLFW.GLFW_KEY_BACKSPACE) {
+                String v = editing.get();
+                if (!v.isEmpty()) editing.set(v.substring(0, v.length() - 1));
+            }
+            return true;
+        }
+        if (keyTarget != null) {
+            if (key == GLFW.GLFW_KEY_BACKSPACE || key == GLFW.GLFW_KEY_DELETE) keyTarget.set(-1);
+            else if (key != GLFW.GLFW_KEY_ESCAPE) keyTarget.set(key);
+            keyTarget = null;
+            return true;
+        }
         if (bindTarget != null) {
             if (key == GLFW.GLFW_KEY_ESCAPE) { /* cancel */ }
             else if (key == GLFW.GLFW_KEY_BACKSPACE || key == GLFW.GLFW_KEY_DELETE) bindTarget.setBind(-1);

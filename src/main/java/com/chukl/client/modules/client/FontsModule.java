@@ -23,6 +23,8 @@ public class FontsModule extends Module {
         defaultOn();
     }
 
+    @Override public boolean listed() { return false; }
+
     private boolean applies(boolean hud) {
         return enabled && (hud ? applyHud.get() : applyGui.get());
     }

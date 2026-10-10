@@ -9,7 +9,7 @@ public abstract class Setting<T> {
     public final String name;
     public final String description;
     protected T value;
-    protected final T def;
+    protected T def;
     private BooleanSupplier visible = () -> true;
 
     protected Setting(String name, String description, T def) {
@@ -30,6 +30,12 @@ public abstract class Setting<T> {
     }
 
     public void reset() { set(def); }
+
+    /** Changes the default (and current) value. Used by modules that need their own defaults. */
+    public void setDefault(T v) {
+        this.def = sanitize(v);
+        this.value = this.def;
+    }
     protected T sanitize(T v) { return v; }
 
     public void visibleWhen(BooleanSupplier s) { this.visible = s; }

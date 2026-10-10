@@ -20,3 +20,17 @@ Fabric client mod for Minecraft 1.21.11. Needs only Fabric Loader and Fabric API
 
 ## Custom font
 Client > Fonts module > Font: Default, Unifont, Lemon Milk, Arial Bold, Xuong (bundled), or Custom. Custom uses `chuklclient:custom`, supplied by a resource pack. See `chukl-font-pack-template.zip`.
+
+## HUD
+Watermark, Coordinates, Module List and Clock are separate modules in the Client panel. Each has anchor, offsets, scale, color mode (static, accent, rainbow), background, padding, border width and color. Place them by dragging in Chukl GUI Studio.
+
+## Donut modules (1.6.0)
+Six base / chunk finders, all in the Donut panel. They draw through walls.
+- **Water Sus Chunk**: Water Client's amethyst + underground chest finder.
+- **Sus Chunk Finder**: your addon's tuned version.
+- **Krispy Chunk Finder**: server-light and dig based finder.
+- **Neon Chunk Finder**: Water's cached spawner, chest and dungeon finder with tracers.
+- **OG Chunk Finder**: Water's seagrass, deepslate, repeater and polar-bear detector with chunk markers.
+- **67 Sus Chunk Finder**: 67Client's scored finder with zones and a centroid marker.
+- **Anti Vanish** (1.6.1, from Anubis): watches the DonutSMP staff list for vanished staff using tab, spectator switches, a /msg probe, invisible bodies, sounds and particles, plus the goliath map. A red HUD box and the Elder Guardian sound say "WATCHING YOU".
+- **Logo** (1.6.2): Client panel > Logo. Pick the Ch logo or the Troll logo, size, opacity, corner, and whether it shows on the HUD and in the Click GUI corner. The Ch logo is also the mod icon.

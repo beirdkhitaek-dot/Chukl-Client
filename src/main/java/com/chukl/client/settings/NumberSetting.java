@@ -30,6 +30,9 @@ public class NumberSetting extends Setting<Double> {
         return step >= 1 ? String.valueOf(getInt()) : String.format("%.2f", value);
     }
 
+    public double getMin() { return min; }
+    public double getMax() { return max; }
+
     @Override public JsonElement toJson() { return new JsonPrimitive(value); }
     @Override public void fromJson(JsonElement e) { set(e.getAsDouble()); }
 }

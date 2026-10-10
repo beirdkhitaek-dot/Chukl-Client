@@ -2,7 +2,8 @@ package com.chukl.client.core;
 
 import com.chukl.client.modules.client.ClickGuiModule;
 import com.chukl.client.modules.client.FontsModule;
-import com.chukl.client.modules.client.HudModule;
+import com.chukl.client.modules.client.hud.*;
+import com.chukl.client.modules.donut.*;
 import net.minecraft.client.gui.DrawContext;
 
 import java.util.ArrayList;
@@ -17,7 +18,20 @@ public final class ModuleManager {
     public static void init() {
         register(new ClickGuiModule());
         register(new FontsModule());
-        register(new HudModule());
+        register(new WatermarkModule());
+        register(new CoordinatesModule());
+        register(new ModuleListModule());
+        register(new ClockModule());
+        register(new LogoModule());
+
+        // Donut
+        register(new WaterSusChunk());
+        register(new ChuklSusChunkFinder());
+        register(new KrispyChunkFinder());
+        register(new NeonChunkFinder());
+        register(new OGChunkFinder());
+        register(new SixSevenSusChunkFinder());
+        register(new AntiVanishModule());
     }
 
     public static void register(Module m) { MODULES.add(m); }
@@ -41,8 +55,40 @@ public final class ModuleManager {
         return null;
     }
 
+    public static void keyPress(int key) {
+        for (Module m : MODULES) {
+            if (!m.isEnabled()) continue;
+            try { if (m.onKeyPress(key)) return; } catch (Throwable t) { com.chukl.client.ChuklClient.LOG.error("onKeyPress {}", m.name, t); }
+        }
+    }
+
     public static void tick() {
         for (Module m : MODULES) if (m.isEnabled()) m.tickSafe();
+    }
+
+    public static void render3D(net.minecraft.client.render.VertexConsumerProvider.Immediate b, net.minecraft.client.util.math.MatrixStack m, net.minecraft.util.math.Vec3d cam) {
+        for (Module mod : MODULES) if (mod.isEnabled()) mod.render3DSafe(b, m, cam);
+    }
+
+    public static void packetReceive(net.minecraft.network.packet.Packet<?> p) {
+        for (Module mod : MODULES) if (mod.isEnabled()) mod.packetReceiveSafe(p);
+    }
+
+    /** True if any module cancelled the packet. */
+    public static boolean packetSend(net.minecraft.network.packet.Packet<?> p) {
+        boolean cancel = false;
+        for (Module mod : MODULES) if (mod.isEnabled() && mod.packetSendSafe(p)) cancel = true;
+        return cancel;
+    }
+
+    public static void render3D(Render3D r) {
+        for (Module m : MODULES) if (m.isEnabled()) m.render3DSafe(r);
+        r.flush();
+    }
+
+    public static void packet(net.minecraft.network.packet.Packet<?> p) {
+        com.chukl.client.suschunk.ServerLightCache.get().onPacket(p);
+        for (Module m : MODULES) if (m.isEnabled()) m.packetSafe(p);
     }
 
     public static void render2D(DrawContext ctx, float delta) {
