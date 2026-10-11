@@ -3,6 +3,7 @@ package com.chukl.client.core;
 import com.chukl.client.modules.client.ClickGuiModule;
 import com.chukl.client.modules.client.FontsModule;
 import com.chukl.client.modules.client.hud.*;
+import com.chukl.client.modules.combat.*;
 import com.chukl.client.modules.donut.*;
 import net.minecraft.client.gui.DrawContext;
 
@@ -32,6 +33,24 @@ public final class ModuleManager {
         register(new OGChunkFinder());
         register(new SixSevenSusChunkFinder());
         register(new AntiVanishModule());
+
+        // Combat
+        register(new AnchorMacro());
+        register(new AutoCrystal());
+        register(new AutoCrystalAC());
+        register(new AutoDoubleHand());
+        register(new AutoHitCrystal());
+        register(new AutoTotem());
+        register(new AutoInvTotem());
+        register(new DoubleAnchor());
+        register(new Hitbox());
+        register(new HoverTotem());
+        register(new ShieldBreaker());
+        register(new SingleAnchor());
+        register(new SpearSwap());
+        register(new Triggerbot());
+        register(new HitAura());
+        register(new LegitAura());
     }
 
     public static void register(Module m) { MODULES.add(m); }

@@ -12,6 +12,9 @@ import net.minecraft.network.packet.Packet;
 public abstract class WModule extends Module {
     private final MatrixStack identity = new MatrixStack();
 
+    /** Secondary held-key trigger (Water's ActivatableModule), separate from the module's main toggle bind. */
+    private int activationKey = -1;
+
     protected WModule(String name, Category category) {
         super(category.target, name, name + " (from Water Client)");
     }
@@ -20,6 +23,19 @@ public abstract class WModule extends Module {
         com.chukl.client.settings.Setting<?> built = s.build();
         if (built != null) add(built);
     }
+
+    public int getActivationKey() { return activationKey; }
+
+    public void setActivationKey(int key) {
+        this.activationKey = key;
+        com.chukl.client.core.Config.markDirty();
+    }
+
+    /** Fired on key-down of the activation key, while the module is enabled. Default toggles the module. */
+    public void onActivationKeyPressed() { toggle(); }
+
+    /** Fired on key-down of the module's main bind. Chukl toggles via Keys already; override hooks stay no-ops here. */
+    public void onBindPressed() { }
 
     // ---- Water hooks (public to match Water's signatures) ----
     @Override public void onEnable() { }
