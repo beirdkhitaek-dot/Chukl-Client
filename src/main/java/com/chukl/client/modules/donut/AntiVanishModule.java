@@ -178,7 +178,7 @@ extends Module {
                 this.selfPlacedBlocks.put(adjacent.asLong(), until);
                 String itemPath = "";
                 if (AntiVanishModule.MC.player != null && useOn.getHand() != null) {
-                    Identifier itemId = Registries.ITEM.getId((Object)AntiVanishModule.MC.player.getStackInHand(useOn.getHand()).getItem());
+                    Identifier itemId = Registries.ITEM.getId(AntiVanishModule.MC.player.getStackInHand(useOn.getHand()).getItem());
                     itemPath = AntiVanishHeuristics.path((String)(itemId == null ? "" : itemId.toString()));
                 }
                 AntiVanishModule.markSelfMultiBlockFootprint(hit, itemPath, this.selfPlacedBlocks, until);
@@ -221,21 +221,21 @@ extends Module {
         PlayerListS2CPacket info2;
         if (packet instanceof PlayerRemoveS2CPacket) {
             PlayerRemoveS2CPacket remove = (PlayerRemoveS2CPacket)packet;
-            if (remove.comp_1105().size() < 4) {
-                for (UUID id : remove.comp_1105()) {
+            if (remove.profileIds().size() < 4) {
+                for (UUID id : remove.profileIds()) {
                     this.observations.offer(Observation.tabRemove(id));
                 }
             }
         } else if (packet instanceof PlayerListS2CPacket && (info2 = (PlayerListS2CPacket)packet).getActions().contains(PlayerListS2CPacket.Action.UPDATE_LISTED)) {
             int unlisted = 0;
             for (PlayerListS2CPacket.Entry entry : info2.getEntries()) {
-                if (entry == null || entry.comp_1108()) continue;
+                if (entry == null || entry.listed()) continue;
                 ++unlisted;
             }
             if (unlisted > 0 && unlisted < 4) {
                 for (PlayerListS2CPacket.Entry entry : info2.getEntries()) {
-                    if (entry == null || entry.comp_1108()) continue;
-                    this.observations.offer(Observation.tabHide(entry.comp_1106()));
+                    if (entry == null || entry.listed()) continue;
+                    this.observations.offer(Observation.tabHide(entry.profileId()));
                 }
             }
         } else if (packet instanceof PlayerListS2CPacket && (info = (PlayerListS2CPacket)packet).getActions().contains(PlayerListS2CPacket.Action.UPDATE_GAME_MODE)) {
@@ -244,16 +244,16 @@ extends Module {
             String departedName;
             String text;
             GameMessageS2CPacket chat = (GameMessageS2CPacket)packet;
-            String string = text = chat.comp_763() == null ? "" : chat.comp_763().getString();
+            String string = text = chat.content() == null ? "" : chat.content().getString();
             if (!text.isBlank()) {
                 this.observations.offer(Observation.systemChat(text));
             }
-            if (!(departedName = AntiVanishModule.departedPlayerName(chat.comp_763())).isBlank()) {
+            if (!(departedName = AntiVanishModule.departedPlayerName(chat.content())).isBlank()) {
                 this.observations.offer(Observation.playerLeft(departedName));
             }
         } else {
             CommandSuggestionsS2CPacket suggestions;
-            if (packet instanceof CommandSuggestionsS2CPacket && this.completionRequestIds.remove((suggestions = (CommandSuggestionsS2CPacket)packet).comp_2262())) {
+            if (packet instanceof CommandSuggestionsS2CPacket && this.completionRequestIds.remove((suggestions = (CommandSuggestionsS2CPacket)packet).id())) {
                 ArrayList<String> names = new ArrayList<String>();
                 for (Suggestion suggestion : suggestions.getSuggestions().getList()) {
                     String text = suggestion.getText();
@@ -268,13 +268,13 @@ extends Module {
                 this.observations.offer(Observation.entityMetadata(metadata.id()));
             } else if (packet instanceof ExplosionS2CPacket) {
                 ExplosionS2CPacket explosion = (ExplosionS2CPacket)packet;
-                this.observations.offer(Observation.explosion(explosion.comp_2883(), explosion.comp_4594()));
+                this.observations.offer(Observation.explosion(explosion.center(), explosion.radius()));
             } else if (packet instanceof PlaySoundFromEntityS2CPacket) {
                 PlaySoundFromEntityS2CPacket sound = (PlaySoundFromEntityS2CPacket)packet;
                 this.observations.offer(Observation.entitySound(sound.getEntityId(), AntiVanishModule.soundId(((SoundEvent)sound.getSound().value()).id())));
             } else if (packet instanceof ParticleS2CPacket) {
                 ParticleS2CPacket particles = (ParticleS2CPacket)packet;
-                Identifier id = Registries.PARTICLE_TYPE.getId((Object)particles.getParameters().getType());
+                Identifier id = Registries.PARTICLE_TYPE.getId(particles.getParameters().getType());
                 this.observations.offer(Observation.position(ObservationType.PARTICLE, particles.getX(), particles.getY(), particles.getZ(), id == null ? "" : id.toString()));
             } else if (packet instanceof PlaySoundS2CPacket) {
                 PlaySoundS2CPacket sound = (PlaySoundS2CPacket)packet;
@@ -939,9 +939,9 @@ extends Module {
             return;
         }
         for (PlayerListS2CPacket.Entry entry : info.getEntries()) {
-            if (entry == null || entry.gameMode() == null || entry.comp_1106() == null) continue;
-            Staff.mark(entry.comp_1106());
-            this.observations.offer(Observation.gamemode(entry.comp_1106(), entry.gameMode().getId()));
+            if (entry == null || entry.gameMode() == null || entry.profileId() == null) continue;
+            Staff.mark(entry.profileId());
+            this.observations.offer(Observation.gamemode(entry.profileId(), entry.gameMode().getId()));
         }
     }
 
@@ -987,7 +987,7 @@ extends Module {
             if (named) {
                 line.name(NameFilter.apply((String)subject));
             } else {
-                line.value((Object)subject);
+                line.value(subject);
             }
             line.text(")");
         }
@@ -1015,7 +1015,7 @@ extends Module {
             out.add(new HudEntry("CRITICAL", this.criticalWatcher));
         }
         HashSet seenRows = new HashSet();
-        this.detections.values().stream().filter(detection -> detection.expiresAt > now).filter(AntiVanishModule::detectionWorthShowing).sorted(Comparator.comparingInt(detection -> detection.score).reversed().thenComparing(detection -> detection.name, String.CASE_INSENSITIVE_ORDER)).map(detection -> new HudEntry(detection.name, detection.reason)).filter(entry -> seenRows.add(AntiVanishModule.hudTag(entry) + "\u0000" + AntiVanishModule.hudValue(entry))).limit(4L).forEach(out::add);
+        this.detections.values().stream().filter(detection -> detection.expiresAt > now).filter(AntiVanishModule::detectionWorthShowing).sorted(Comparator.<Detection>comparingInt(detection -> detection.score).reversed().thenComparing(detection -> detection.name, String.CASE_INSENSITIVE_ORDER)).map(detection -> new HudEntry(detection.name, detection.reason)).filter(entry -> seenRows.add(AntiVanishModule.hudTag(entry) + "\u0000" + AntiVanishModule.hudValue(entry))).limit(4L).forEach(out::add);
         return List.copyOf(out);
     }
 
@@ -1118,7 +1118,7 @@ extends Module {
             for (int dy = -2; dy <= 2; ++dy) {
                 for (int dz = -2; dz <= 2; ++dz) {
                     BlockPos pos = center.add(dx, dy, dz);
-                    Identifier id = Registries.BLOCK.getId((Object)AntiVanishModule.MC.world.getBlockState(pos).getBlock());
+                    Identifier id = Registries.BLOCK.getId(AntiVanishModule.MC.world.getBlockState(pos).getBlock());
                     String path = AntiVanishModule.shortId(id == null ? "" : id.toString());
                     if (!path.contains("campfire") && !path.contains("furnace") && !path.contains("smoker") && !path.contains("torch") && !path.contains("fire") && !path.contains("candle") && !path.contains("respawn_anchor")) continue;
                     return true;

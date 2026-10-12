@@ -109,11 +109,11 @@ public class AutoClickerModule extends SModule {
       }
 
       mc.options.attackKey.setPressed(true);
-      ((MinecraftAccessor)mc).chukl$startAttack();
+      ((MinecraftAccessor)mc).chukl$doAttack();
       mc.options.attackKey.setPressed(false);
    }
 
    private void rightClick(MinecraftClient mc) {
-      ((MinecraftAccessor)mc).chukl$startUseItem();
+      ((MinecraftAccessor)mc).chukl$doItemUse();
    }
 }

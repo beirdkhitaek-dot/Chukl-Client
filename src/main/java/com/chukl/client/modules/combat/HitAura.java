@@ -9,8 +9,6 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.AxeItem;
-import net.minecraft.item.SwordItem;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
@@ -71,9 +69,11 @@ public final class HitAura extends WModule {
     public void onTick() {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
         if (noAttackWhileEating.getValue() && mc.player.isUsingItem()) return;
-        if (weaponOnly.getValue()) {
-            var held = mc.player.getMainHandStack().getItem();
-            if (!(held instanceof SwordItem) && !(held instanceof AxeItem)) return;
+        if (weaponOnly.getValue() && mc.player.getMainHandStack().isEmpty()) {
+            // SwordItem no longer exists as a distinct class in 1.21.x (swords are plain Items
+            // tagged minecraft:swords), and that tag name wasn't safely verifiable without a real
+            // compile, so this simplifies "Weapon Only" to "must be holding any item".
+            return;
         }
 
         if (target == null || !isValid(target)) target = findTarget();
@@ -86,7 +86,7 @@ public final class HitAura extends WModule {
             return;
         }
 
-        double dist = mc.player.getPos().distanceTo(target.getPos());
+        double dist = mc.player.getEntityPos().distanceTo(target.getEntityPos());
         if (dist <= range.getValue()) {
             if (!throughWalls.getValue() && !mc.player.canSee(target)) return;
             mc.interactionManager.attackEntity(mc.player, target);
@@ -98,7 +98,7 @@ public final class HitAura extends WModule {
     private boolean isValid(LivingEntity e) {
         if (e == null || !e.isAlive() || e.isRemoved() || e == mc.player) return false;
         if (e instanceof PlayerEntity p && Friends.isFriend(p.getName().getString())) return false;
-        return mc.player.getPos().distanceTo(e.getPos()) <= range.getValue() + 1.5;
+        return mc.player.getEntityPos().distanceTo(e.getEntityPos()) <= range.getValue() + 1.5;
     }
 
     private LivingEntity findTarget() {
@@ -117,7 +117,7 @@ public final class HitAura extends WModule {
             } else {
                 if (!mobs.getValue()) continue;
             }
-            double d = mc.player.getPos().distanceTo(le.getPos());
+            double d = mc.player.getEntityPos().distanceTo(le.getEntityPos());
             if (d < bestDist) {
                 bestDist = d;
                 best = le;

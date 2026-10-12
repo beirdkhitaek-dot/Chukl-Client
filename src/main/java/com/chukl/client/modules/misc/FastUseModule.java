@@ -20,7 +20,7 @@ public class FastUseModule extends SModule {
       MinecraftClient mc = MinecraftClient.getInstance();
       if (mc.player != null) {
          if (this.appliesTo(mc)) {
-            ((MinecraftAccessor)mc).chukl$setRightClickDelay(0);
+            ((MinecraftAccessor)mc).chukl$setItemUseCooldown(0);
          }
       }
    }

@@ -33,6 +33,7 @@ public final class ModuleChat {
         public Body good(String s) { return add(s, Formatting.GREEN); }
         public Body warn(String s) { return add(s, Formatting.YELLOW); }
         public Body danger(String s) { return add(s, Formatting.RED); }
+        public Body value(String s) { return add(s, Formatting.GOLD); }
         public Body append(Text t) { out.append(t); return this; }
         public Text build() { return out.copy(); }
     }

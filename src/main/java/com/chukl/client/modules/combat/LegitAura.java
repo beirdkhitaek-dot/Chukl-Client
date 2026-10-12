@@ -9,8 +9,6 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.decoration.ArmorStandEntity;
 import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.AxeItem;
-import net.minecraft.item.SwordItem;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
@@ -60,16 +58,18 @@ public final class LegitAura extends WModule {
     public void onTick() {
         if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
         if (noAttackInGui.getValue() && mc.currentScreen != null) return;
-        if (weaponOnly.getValue()) {
-            var held = mc.player.getMainHandStack().getItem();
-            if (!(held instanceof SwordItem) && !(held instanceof AxeItem)) return;
+        if (weaponOnly.getValue() && mc.player.getMainHandStack().isEmpty()) {
+            // SwordItem no longer exists as a distinct class in 1.21.x (swords are plain Items
+            // tagged minecraft:swords), and that tag name wasn't safely verifiable without a real
+            // compile, so this simplifies "Weapon Only" to "must be holding any item".
+            return;
         }
         if (onlyWhenCharged.getValue() && mc.player.getAttackCooldownProgress(0.0F) < 1.0F) return;
 
         LivingEntity target = findAimedTarget();
         if (target == null) return;
 
-        double dist = mc.player.getPos().distanceTo(target.getPos());
+        double dist = mc.player.getEntityPos().distanceTo(target.getEntityPos());
         if (dist > attackRange.getValue()) return;
         if (!throughWalls.getValue() && !mc.player.canSee(target)) return;
 
