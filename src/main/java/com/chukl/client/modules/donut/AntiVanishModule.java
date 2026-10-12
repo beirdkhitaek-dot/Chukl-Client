@@ -1076,8 +1076,7 @@ extends Module {
     }
 
     private static String compass(double dx, double dz) {
-        String ns;
-        String string = dz < -1.0 ? "N" : (ns = dz > 1.0 ? "S" : "");
+        String ns = dz < -1.0 ? "N" : (dz > 1.0 ? "S" : "");
         String ew = dx > 1.0 ? "E" : (dx < -1.0 ? "W" : "");
         return ns + ew;
     }
