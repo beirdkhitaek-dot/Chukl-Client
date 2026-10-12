@@ -5,6 +5,7 @@ import com.chukl.client.modules.client.FontsModule;
 import com.chukl.client.modules.client.hud.*;
 import com.chukl.client.modules.combat.*;
 import com.chukl.client.modules.donut.*;
+import com.chukl.client.modules.misc.*;
 import net.minecraft.client.gui.DrawContext;
 
 import java.util.ArrayList;
@@ -51,6 +52,30 @@ public final class ModuleManager {
         register(new Triggerbot());
         register(new HitAura());
         register(new LegitAura());
+
+        // Misc
+        register(new ArmorTrimHiderModule());
+        register(new AutoClickerModule());
+        register(new AutoTpaModule());
+        register(new AutoWalkModule());
+        register(new CoordSnapperModule());
+        register(new CustomCrosshairModule());
+        register(new CustomFovModule());
+        register(new CustomGlintModule());
+        register(new FakeStatsModule());
+        register(new FakePayModule());
+        register(new FakeRolesModule());
+        register(new FastUseModule());
+        register(new FreeLookModule());
+        register(new FreecamModule());
+        register(new GambleRiggerModule());
+        register(new NameProtectModule());
+        register(new NameTagsModule());
+        register(new SkinProtectModule());
+        register(new SpawnerProtectModule());
+        register(new StaffListModule());
+        register(new WeatherNotifierModule());
+        register(new ZoomModule());
     }
 
     public static void register(Module m) { MODULES.add(m); }

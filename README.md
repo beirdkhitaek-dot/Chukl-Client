@@ -45,3 +45,24 @@ Fourteen Water Client combat modules, ported as-is (extend `water.WModule`, so t
 - **Hitbox**, **Triggerbot**: hitbox/attack helpers, friend-aware.
 - **Hit Aura**: target-and-rotate aura — picks the closest valid entity in range, turns the player's view toward it and attacks on a configurable attacks-per-second timer. Rebuilt on Chukl's own module system rather than Water's separate rotation framework; see the class javadoc.
 - **Legit Aura**: aim-assisted aura that never touches player rotation — it only attacks a target already inside a configurable aim-FOV cone around the real crosshair, for legit-looking play.
+
+## Misc modules (1.8.0)
+Twenty-two 67Client Misc modules, ported into the Misc panel (`extend sixseven.SModule`, a shim with full API parity to 67Client's own module/settings classes).
+- **Freecam**, **Free Look**: detach the camera from your body, or just the view, while the real player stays put; both use dedicated mixins on input/camera/entity classes.
+- **Auto Walk**: holds a chosen movement direction automatically.
+- **Auto Clicker**: configurable CPS left/right click automation, jitter and random variance.
+- **Auto TPA**: auto-accepts or sends TPA requests by pattern.
+- **Fast Use**: removes the item-use cooldown (eating, drinking, bow draw) via `MinecraftAccessor`.
+- **Zoom**, **Custom FOV**: temporary scroll-to-zoom and a persistent custom field of view, combined in one `MiscFovMixin`.
+- **Custom Crosshair**: a replacement crosshair drawn with a new DrawContext-based `Crosshair2D` primitive renderer (hides the vanilla one via `MiscCrosshairMixin`).
+- **Custom Glint**: recolors enchantment glint to the Click GUI accent color (settings/logic only — no render hook existed in the source to port, documented in the class javadoc).
+- **Coord Snapper**: copies your current coordinates to a chat-ready string.
+- **Weather Notifier**: chat/HUD alert when in-game weather changes.
+- **Name Protect**, **Name Tags**: censor your real name in chat/tab/nametags, or hide other players' nametags entirely.
+- **Fake Roles**, **Staff List**: decorate chat/tab/nametag with a fake prefix, backed by a DonutSMP staff-list tracker.
+- **Fake Pay**, **Fake Stats**: intercepts `/pay` and balance-related commands to fake the output client-side, never touching the real server command.
+- **Spawner Protect**: warns when a nearby spawner's block state changes unexpectedly (break/update packet tracking).
+- **Skin Protect**: swaps your rendered skin to a decoy while the module is on.
+- **Gamble Rigger**, **Armor Trim Hider**: gamble-command helper and an armor-trim visibility toggle (Armor Trim Hider currently exposes settings/logic only; its render hook was too obfuscated to verify blind without a real compile, so it's not wired yet — same honesty-first approach as Custom Glint).
+
+All thirteen new mixins (`Misc*Mixin`, plus `ClientInputAccessor`/`MinecraftAccessor`) were ported from 67Client's real 1.21.11 mixin source using only vanilla SpongePowered Mixin API — the project doesn't depend on MixinExtras, which the originals used for a few call sites, so those spots use an equivalent vanilla injector instead (documented per-file in the javadocs).
