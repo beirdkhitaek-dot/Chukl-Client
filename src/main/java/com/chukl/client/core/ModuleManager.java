@@ -1,5 +1,6 @@
 package com.chukl.client.core;
 
+import com.chukl.client.ChuklClient;
 import com.chukl.client.modules.client.ClickGuiModule;
 import com.chukl.client.modules.client.FontsModule;
 import com.chukl.client.modules.client.hud.*;
@@ -16,66 +17,81 @@ public final class ModuleManager {
 
     private ModuleManager() { }
 
-    /** Add new modules here: register(new MyModule()); */
+    /** Add new modules here: safeRegister(MyModule::new); */
     public static void init() {
-        register(new ClickGuiModule());
-        register(new FontsModule());
-        register(new WatermarkModule());
-        register(new CoordinatesModule());
-        register(new ModuleListModule());
-        register(new ClockModule());
-        register(new LogoModule());
+        safeRegister(ClickGuiModule::new);
+        safeRegister(FontsModule::new);
+        safeRegister(WatermarkModule::new);
+        safeRegister(CoordinatesModule::new);
+        safeRegister(ModuleListModule::new);
+        safeRegister(ClockModule::new);
+        safeRegister(LogoModule::new);
 
         // Donut
-        register(new WaterSusChunk());
-        register(new ChuklSusChunkFinder());
-        register(new KrispyChunkFinder());
-        register(new NeonChunkFinder());
-        register(new OGChunkFinder());
-        register(new SixSevenSusChunkFinder());
-        register(new AntiVanishModule());
+        safeRegister(WaterSusChunk::new);
+        safeRegister(ChuklSusChunkFinder::new);
+        safeRegister(KrispyChunkFinder::new);
+        safeRegister(NeonChunkFinder::new);
+        safeRegister(OGChunkFinder::new);
+        safeRegister(SixSevenSusChunkFinder::new);
+        safeRegister(AntiVanishModule::new);
 
         // Combat
-        register(new AnchorMacro());
-        register(new AutoCrystal());
-        register(new AutoCrystalAC());
-        register(new AutoDoubleHand());
-        register(new AutoHitCrystal());
-        register(new AutoTotem());
-        register(new AutoInvTotem());
-        register(new DoubleAnchor());
-        register(new Hitbox());
-        register(new HoverTotem());
-        register(new ShieldBreaker());
-        register(new SingleAnchor());
-        register(new SpearSwap());
-        register(new Triggerbot());
-        register(new HitAura());
-        register(new LegitAura());
+        safeRegister(AnchorMacro::new);
+        safeRegister(AutoCrystal::new);
+        safeRegister(AutoCrystalAC::new);
+        safeRegister(AutoDoubleHand::new);
+        safeRegister(AutoHitCrystal::new);
+        safeRegister(AutoTotem::new);
+        safeRegister(AutoInvTotem::new);
+        safeRegister(DoubleAnchor::new);
+        safeRegister(Hitbox::new);
+        safeRegister(HoverTotem::new);
+        safeRegister(ShieldBreaker::new);
+        safeRegister(SingleAnchor::new);
+        safeRegister(SpearSwap::new);
+        safeRegister(Triggerbot::new);
+        safeRegister(HitAura::new);
+        safeRegister(LegitAura::new);
 
         // Misc
-        register(new ArmorTrimHiderModule());
-        register(new AutoClickerModule());
-        register(new AutoTpaModule());
-        register(new AutoWalkModule());
-        register(new CoordSnapperModule());
-        register(new CustomCrosshairModule());
-        register(new CustomFovModule());
-        register(new CustomGlintModule());
-        register(new FakeStatsModule());
-        register(new FakePayModule());
-        register(new FakeRolesModule());
-        register(new FastUseModule());
-        register(new FreeLookModule());
-        register(new FreecamModule());
-        register(new GambleRiggerModule());
-        register(new NameProtectModule());
-        register(new NameTagsModule());
-        register(new SkinProtectModule());
-        register(new SpawnerProtectModule());
-        register(new StaffListModule());
-        register(new WeatherNotifierModule());
-        register(new ZoomModule());
+        safeRegister(ArmorTrimHiderModule::new);
+        safeRegister(AutoClickerModule::new);
+        safeRegister(AutoTpaModule::new);
+        safeRegister(AutoWalkModule::new);
+        safeRegister(CoordSnapperModule::new);
+        safeRegister(CustomCrosshairModule::new);
+        safeRegister(CustomFovModule::new);
+        safeRegister(CustomGlintModule::new);
+        safeRegister(FakeStatsModule::new);
+        safeRegister(FakePayModule::new);
+        safeRegister(FakeRolesModule::new);
+        safeRegister(FastUseModule::new);
+        safeRegister(FreeLookModule::new);
+        safeRegister(FreecamModule::new);
+        safeRegister(GambleRiggerModule::new);
+        safeRegister(NameProtectModule::new);
+        safeRegister(NameTagsModule::new);
+        safeRegister(SkinProtectModule::new);
+        safeRegister(SpawnerProtectModule::new);
+        safeRegister(StaffListModule::new);
+        safeRegister(WeatherNotifierModule::new);
+        safeRegister(ZoomModule::new);
+
+        ChuklClient.LOG.info("ModuleManager.init() registered {} modules", MODULES.size());
+    }
+
+    /**
+     * Registers a module, but if its constructor throws, logs it and keeps going instead of letting
+     * the exception propagate out of init() and silently drop every module registered after it
+     * (a single bad constructor used to be able to wipe out the entire rest of the Misc category).
+     */
+    private static void safeRegister(java.util.function.Supplier<Module> supplier) {
+        try {
+            register(supplier.get());
+        } catch (Throwable t) {
+            ChuklClient.LOG.error("Failed to construct/register a module, skipping it", t);
+        }
     }
 
     public static void register(Module m) { MODULES.add(m); }

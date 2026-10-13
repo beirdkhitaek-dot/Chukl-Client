@@ -62,8 +62,17 @@ public abstract class Module {
         } catch (Throwable t) {
             ChuklClient.LOG.error("Module {} failed, disabling", name, t);
             enabled = false;
+            notifyFailure(t);
         }
         Config.markDirty();
+    }
+
+    /** Surfaces a module crash in chat (not just the log) so it's visible in-game instead of silently doing nothing. */
+    protected void notifyFailure(Throwable t) {
+        if (mc.player != null) {
+            String msg = t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName();
+            mc.player.sendMessage(net.minecraft.text.Text.literal("[Chukl] " + name + " crashed: " + msg), false);
+        }
     }
 
     public final void tickSafe() {
@@ -85,6 +94,7 @@ public abstract class Module {
     private void fail(Throwable t) {
         ChuklClient.LOG.error("Module {} crashed, disabling", name, t);
         enabled = false;
+        notifyFailure(t);
         try { onDisable(); } catch (Throwable ignored) { }
     }
 
