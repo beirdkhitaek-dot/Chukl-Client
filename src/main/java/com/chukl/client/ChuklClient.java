@@ -10,7 +10,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -51,13 +51,15 @@ public class ChuklClient implements ClientModInitializer {
         });
 
         // Runs every frame regardless of what's under the crosshair (unlike the block-outline hook this
-        // used to piggyback on, which only fires while actually looking at a block in range).
-        WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> {
+        // used to piggyback on, which only fired while actually looking at a block in range, verified
+        // against the fabric-api 0.141.6+1.21.11 source rather than a newer/mismatched version).
+        WorldRenderEvents.END_MAIN.register(context -> {
             try {
+                var matrices = context.matrices();
                 var consumers = context.consumers();
-                var matrices = context.matrixStack();
-                if (consumers instanceof VertexConsumerProvider.Immediate immediate && matrices != null) {
-                    ModuleManager.render3D(new Render3D(immediate, matrices, context.camera().getCameraPos()));
+                var cameraState = context.worldState().cameraRenderState;
+                if (matrices != null && cameraState != null && consumers instanceof VertexConsumerProvider.Immediate immediate) {
+                    ModuleManager.render3D(new Render3D(immediate, matrices, cameraState.pos));
                 }
             } catch (Throwable t) {
                 LOG.error("World render error", t);
