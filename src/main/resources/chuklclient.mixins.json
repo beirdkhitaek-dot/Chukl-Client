@@ -22,8 +22,7 @@
     "MiscPacketCommandMixin",
     "MiscSkinProtectMixin",
     "MiscTabNameMixin",
-    "PacketMixin",
-    "WorldRenderMixin"
+    "PacketMixin"
   ],
   "injectors": {
     "defaultRequire": 0

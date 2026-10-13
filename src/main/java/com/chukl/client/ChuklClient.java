@@ -3,14 +3,17 @@ package com.chukl.client;
 import com.chukl.client.core.Config;
 import com.chukl.client.core.Keys;
 import com.chukl.client.core.ModuleManager;
+import com.chukl.client.core.Render3D;
 import com.chukl.client.modules.client.ClickGuiModule;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.text.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,6 +47,20 @@ public class ChuklClient implements ClientModInitializer {
                 ModuleManager.render2D(ctx, tickCounter.getTickProgress(false));
             } catch (Throwable t) {
                 LOG.error("HUD error", t);
+            }
+        });
+
+        // Runs every frame regardless of what's under the crosshair (unlike the block-outline hook this
+        // used to piggyback on, which only fires while actually looking at a block in range).
+        WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> {
+            try {
+                var consumers = context.consumers();
+                var matrices = context.matrixStack();
+                if (consumers instanceof VertexConsumerProvider.Immediate immediate && matrices != null) {
+                    ModuleManager.render3D(new Render3D(immediate, matrices, context.camera().getCameraPos()));
+                }
+            } catch (Throwable t) {
+                LOG.error("World render error", t);
             }
         });
 
