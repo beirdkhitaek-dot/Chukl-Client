@@ -61,6 +61,22 @@ public class ClickGuiScreen extends Screen {
     private String tooltip;
     private int tipX, tipY;
 
+    private long lastNanos;
+
+    /** Real elapsed seconds since the last render call (frame-rate independent, unlike the tick-delta param). */
+    private double dt() {
+        long now = System.nanoTime();
+        double d = lastNanos == 0L ? 0.0 : (now - lastNanos) / 1_000_000_000.0;
+        lastNanos = now;
+        return Math.min(0.2, Math.max(0.0, d));
+    }
+
+    private static double ease(double current, double target, double dt, double speed) {
+        double t = 1.0 - Math.exp(-speed * 60.0 * dt);
+        double v = current + (target - current) * Math.min(1.0, Math.max(0.0, t));
+        return Math.abs(v - target) < 0.002 ? target : v;
+    }
+
     public ClickGuiScreen(ClickGuiModule mod) {
         super(Text.literal("Chukl Client"));
         this.mod = mod;
@@ -158,6 +174,7 @@ public class ClickGuiScreen extends Screen {
     @Override
     public void render(DrawContext ctx, int mouseX, int mouseY, float delta) {
         syncMetrics();
+        double dt = dt();
         if (sliderRow == null) activeScale = mod.scale.getFloat();
         float s = activeScale;
         lw = (int) (width / s);
@@ -181,7 +198,7 @@ public class ClickGuiScreen extends Screen {
         tooltip = null;
         TextRenderer tr = mc.textRenderer;
 
-        for (Category c : new ArrayList<>(Layout.ORDER)) renderPanel(ctx, tr, Layout.get(c), lmx, lmy);
+        for (Category c : new ArrayList<>(Layout.ORDER)) renderPanel(ctx, tr, Layout.get(c), lmx, lmy, dt);
 
         // close button (touch friendly)
         boolean hc = in(lmx, lmy, lw - 20, 4, 16, 16);
@@ -202,26 +219,31 @@ public class ClickGuiScreen extends Screen {
         st.popMatrix();
     }
 
-    private void renderPanel(DrawContext ctx, TextRenderer tr, Panel p, double lmx, double lmy) {
+    private void renderPanel(DrawContext ctx, TextRenderer tr, Panel p, double lmx, double lmy, double dt) {
         int acc = mod.headerColor(p.cat);
         int x = p.x, y = p.y, w = p.w;
+        int rad = mod.roundRadius.getInt();
         int bw = mod.borderWidth.getInt();
         if (bw > 0) {
             int bc = mod.borderColor.get();
             int th = p.totalHeight();
-            ctx.fill(x - bw, y - bw, x + w + bw, y, bc);
-            ctx.fill(x - bw, y + th, x + w + bw, y + th + bw, bc);
-            ctx.fill(x - bw, y, x, y + th, bc);
-            ctx.fill(x + w, y, x + w + bw, y + th, bc);
+            GuiShapes.roundRect(ctx, x - bw, y - bw, x + w + bw, y + th + bw, rad + bw, bc);
         }
+
+        p.bgFade = ease(p.bgFade, p.open ? 1.0 : 0.0, dt, 0.3);
+        boolean drawBody = p.open || p.bgFade > 0.01;
+
         int ht = mod.headerText.get();
-        ctx.fill(x, y, x + w, y + Layout.HEADER, acc);
+        GuiShapes.roundRect(ctx, x, y, x + w, y + Layout.HEADER, rad, rad, drawBody ? 0 : rad, drawBody ? 0 : rad, acc);
         txt(ctx, tr, p.cat.displayName, x + 5, y + (Layout.HEADER - tr.fontHeight) / 2 + 1, ht);
         txt(ctx, tr, p.open ? "-" : "+", x + w - 11, y + (Layout.HEADER - tr.fontHeight) / 2 + 1, ht);
-        if (!p.open) return;
+        if (!drawBody) return;
 
         int by = y + Layout.HEADER;
-        ctx.fill(x, by, x + w, by + p.h, bgColor());
+        int bodyAlpha = (int) (((bgColor() >>> 24) * p.bgFade));
+        int bodyColor = (bodyAlpha << 24) | (bgColor() & 0xFFFFFF);
+        GuiShapes.roundRect(ctx, x, by, x + w, by + p.h, 0, 0, rad, rad, bodyColor);
+        if (!p.open) return;
 
         List<Row> rows = rows(p);
         int content = contentH(rows);
@@ -231,11 +253,14 @@ public class ClickGuiScreen extends Screen {
 
         ctx.enableScissor(x, by, x + w, by + p.h);
         boolean panelHover = in(lmx, lmy, x, by, cw, p.h) && topPanelAt(lmx, lmy) == p;
+        int idx = 0;
         for (Row r : rows) {
             int ry = by + r.y - p.scroll;
             if (ry + r.h < by || ry > by + p.h) continue;
             boolean hover = panelHover && lmy >= ry && lmy < ry + r.h;
-            drawRow(ctx, tr, p, r, x, ry, cw, hover, acc);
+            int rowAccent = r.kind == Kind.MODULE ? mod.moduleColor(idx) : acc;
+            drawRow(ctx, tr, p, r, x, ry, cw, hover, rowAccent);
+            if (r.kind == Kind.MODULE) idx++;
             if (hover && r.kind == Kind.MODULE) { tooltip = r.m.description; tipX = (int) lmx; tipY = (int) lmy; }
             else if (hover && r.s != null && !r.s.description.isEmpty()) { tooltip = r.s.description; tipX = (int) lmx; tipY = (int) lmy; }
         }
@@ -243,7 +268,7 @@ public class ClickGuiScreen extends Screen {
             int th = Math.max(10, (int) ((float) p.h * p.h / content));
             int ty = by + (int) ((float) (p.h - th) * p.scroll / Math.max(1, content - p.h));
             ctx.fill(x + w - SB, by, x + w, by + p.h, 0x55000000);
-            ctx.fill(x + w - SB + 1, ty, x + w - 1, ty + th, acc);
+            GuiShapes.roundRect(ctx, x + w - SB + 1, ty, x + w - 1, ty + th, 2, acc);
         }
         ctx.disableScissor();
 
@@ -261,15 +286,20 @@ public class ClickGuiScreen extends Screen {
             case MODULE -> {
                 boolean on = r.m.isEnabled();
                 int onc = mod.enabledColor(acc);
-                if (on) ctx.fill(x, ry, x + 2, ry + r.h, onc);
-                txt(ctx, tr, mod.fit(tr, r.m.name, cw - 24), x + 6, ty, on ? onc : mod.moduleText.get());
+                // Argon-style: the left accent bar always shows the module's color, enabled or not --
+                // only the name text switches between the accent color and the muted "off" color.
+                ctx.fill(x, ry, x + 2, ry + r.h, acc);
+                String name = mod.fit(tr, r.m.name, cw - 24);
+                int nameW = mod.width(tr, name);
+                int nameX = x + (cw / 2) - (nameW / 2);
+                txt(ctx, tr, name, Math.max(x + 6, nameX), ty, on ? onc : mod.moduleText.get());
                 txt(ctx, tr, p.expanded.contains(r.m.name) ? "-" : "+", right - 4, ty, 0xFF888888);
             }
             case BOOL -> {
                 BoolSetting b = (BoolSetting) r.s;
                 txt(ctx, tr, mod.fit(tr, b.name, cw - 30), x + 10, ty, mod.settingText.get());
-                ctx.fill(right - 8, ry + 3, right, ry + 11, 0xFF333333);
-                if (b.get()) ctx.fill(right - 7, ry + 4, right - 1, ry + 10, acc);
+                GuiShapes.roundRect(ctx, right - 8, ry + 3, right, ry + 11, 2, 0xFF333333);
+                if (b.get()) GuiShapes.roundRect(ctx, right - 7, ry + 4, right - 1, ry + 10, 1, acc);
             }
             case MODE -> {
                 ModeSetting ms = (ModeSetting) r.s;
@@ -289,15 +319,15 @@ public class ClickGuiScreen extends Screen {
                 txt(ctx, tr, mod.fit(tr, t, cw - 14), x + 10, ty, mod.settingText.get());
             }
             case BUTTON -> {
-                ctx.fill(x + 8, ry + 1, x + cw - 4, ry + r.h - 1, mod.button.get());
+                GuiShapes.roundRect(ctx, x + 8, ry + 1, x + cw - 4, ry + r.h - 1, 3, mod.button.get());
                 String t = r.s.name;
                 txt(ctx, tr, t, x + (cw - mod.width(tr, t)) / 2, ty, 0xFFFFFFFF);
             }
             case COLOR -> {
                 ColorSetting c = (ColorSetting) r.s;
                 txt(ctx, tr, mod.fit(tr, c.name, cw - 30), x + 10, ty, mod.settingText.get());
-                ctx.fill(right - 10, ry + 2, right, ry + 12, 0xFF000000);
-                ctx.fill(right - 9, ry + 3, right - 1, ry + 11, c.get() | 0xFF000000);
+                GuiShapes.roundRect(ctx, right - 10, ry + 2, right, ry + 12, 2, 0xFF000000);
+                GuiShapes.roundRect(ctx, right - 9, ry + 3, right - 1, ry + 11, 2, c.get() | 0xFF000000);
             }
             case BIND -> {
                 String t = bindTarget == r.m ? "Bind: ..." : "Bind: " + KeyNames.name(r.m.getBind());
@@ -316,8 +346,12 @@ public class ClickGuiScreen extends Screen {
                     label = "RGBA".charAt(r.ch) + ": " + c.channel(r.ch);
                 }
                 int sx = x + 4, sw = cw - 8;
-                ctx.fill(sx, ry + 1, sx + sw, ry + r.h - 1, mod.track.get());
-                ctx.fill(sx, ry + 1, sx + (int) (sw * f), ry + r.h - 1, (acc & 0x00FFFFFF) | 0x99000000);
+                int trackY = ry + r.h / 2;
+                GuiShapes.roundRect(ctx, sx, trackY - 2, sx + sw, trackY + 2, 2, mod.track.get());
+                GuiShapes.roundRect(ctx, sx, trackY - 2, sx + (int) (sw * f), trackY + 2, 2, (acc & 0x00FFFFFF) | 0xFF000000);
+                double handleX = sx + sw * f;
+                GuiShapes.circle(ctx, handleX, trackY, 4, 0xFF000000);
+                GuiShapes.circle(ctx, handleX, trackY, 3, acc | 0xFF000000);
                 txt(ctx, tr, mod.fit(tr, label, sw - 4), sx + 4, ty, mod.settingText.get() | 0xFF000000);
             }
         }

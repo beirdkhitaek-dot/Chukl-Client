@@ -25,6 +25,9 @@ public final class Layout {
         public int scroll;
         public final Set<String> expanded = new HashSet<>();
 
+        /** Not persisted: drives the panel's fade-in-on-open animation (0..1). */
+        public transient double bgFade;
+
         Panel(Category cat) { this.cat = cat; }
         public int totalHeight() { return HEADER + (open ? h : 0); }
     }

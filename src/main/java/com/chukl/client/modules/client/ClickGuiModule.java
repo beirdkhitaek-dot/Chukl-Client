@@ -19,6 +19,9 @@ public class ClickGuiModule extends Module {
     public final NumberSetting headerHeight = add(new NumberSetting("Header Height", "Height of panel headers", 16, 12, 24, 1));
     // Colors
     public final ColorSetting accent = add(new ColorSetting("Accent", "Headers, sliders, checkboxes", 0xFF5599FF));
+    public final NumberSetting roundRadius = add(new NumberSetting("Round Corners", "Corner radius for panels and rows", 6, 0, 12, 1));
+    public final BoolSetting rainbow = add(new BoolSetting("Rainbow", "Cycle module accent color through the rainbow", false));
+    public final BoolSetting breathing = add(new BoolSetting("Breathing", "Pulse the accent color's brightness", false));
     public final ColorSetting headerText = add(new ColorSetting("Header Text", "Panel title color", 0xFFFFFFFF));
     public final ColorSetting panelColor = add(new ColorSetting("Panel Color", "Panel body color", 0xFF101018));
     public final NumberSetting opacity = add(new NumberSetting("Background", "Panel body opacity %", 85, 20, 100, 5));
@@ -74,6 +77,28 @@ public class ClickGuiModule extends Module {
 
     public int enabledColor(int fallback) {
         return enabledUsesAccent.get() ? fallback : enabledText.get();
+    }
+
+    /**
+     * Argon-style per-module accent color: flat accent, a slow brightness "breathing" pulse, or a
+     * rainbow cycle with a phase offset per row index so consecutive rows don't move in lockstep.
+     */
+    public int moduleColor(int index) {
+        int base = accent.get();
+        if (rainbow.get()) {
+            float hue = (float) (((System.currentTimeMillis() % 3000L) / 3000.0) + index * 0.07) % 1.0F;
+            int rgb = java.awt.Color.HSBtoRGB(hue, 0.65F, 1.0F);
+            return (base & 0xFF000000) | (rgb & 0xFFFFFF);
+        }
+        if (breathing.get()) {
+            float[] hsb = new float[3];
+            java.awt.Color.RGBtoHSB((base >> 16) & 0xFF, (base >> 8) & 0xFF, base & 0xFF, hsb);
+            float phase = Math.abs(((System.currentTimeMillis() % 2000L) / 1000F + index * 0.15F) % 2F - 1F);
+            float bri = 0.35F + 0.65F * phase;
+            int rgb = java.awt.Color.HSBtoRGB(hsb[0], hsb[1], bri);
+            return (base & 0xFF000000) | (rgb & 0xFFFFFF);
+        }
+        return base;
     }
 
     public ClickGuiModule() {
