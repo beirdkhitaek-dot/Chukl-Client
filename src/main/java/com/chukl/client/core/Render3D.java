@@ -43,6 +43,10 @@ public final class Render3D {
         this.camera = camera;
     }
 
+    /** Raw access for renderers (e.g. {@link com.chukl.client.render.EspBoxRenderer}) that build their own vertex layers. */
+    public VertexConsumerProvider.Immediate buffers() { return buffers; }
+    public MatrixStack matrices() { return matrices; }
+
     /** Horizontal quad at height y. */
     public void quadY(double x1, double z1, double x2, double z2, double y, int color) {
         VertexConsumer b = buffers.getBuffer(FILL);

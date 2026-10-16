@@ -35,6 +35,11 @@ public final class ModuleManager {
         safeRegister(OGChunkFinder::new);
         safeRegister(SixSevenSusChunkFinder::new);
         safeRegister(AntiVanishModule::new);
+        safeRegister(StorageEspModule::new);
+        safeRegister(BlockEspModule::new);
+        safeRegister(SusChunkV2Module::new);
+        safeRegister(ChunkFinderBetterModule::new);
+        safeRegister(LuckyFinderModule::new);
 
         // Combat
         safeRegister(AnchorMacro::new);
