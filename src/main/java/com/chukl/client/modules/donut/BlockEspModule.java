@@ -156,8 +156,8 @@ public class BlockEspModule extends Module {
         for (int i = 0; i < TARGETS.length; i++) colorByBlock.put(TARGETS[i].block(), color[i].get());
 
         int alpha = Math.max(0, Math.min(255, highlightAlpha.getInt()));
-        boolean drawLines = shapeMode.check("Both") || shapeMode.check("Lines");
-        boolean drawFill = shapeMode.check("Both") || shapeMode.check("Sides");
+        boolean drawLines = shapeMode.is("Both") || shapeMode.is("Lines");
+        boolean drawFill = shapeMode.is("Both") || shapeMode.is("Sides");
         boolean drawTracers = tracers.get();
 
         var bufferSource = r.buffers();
