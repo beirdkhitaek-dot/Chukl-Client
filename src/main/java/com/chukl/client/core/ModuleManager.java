@@ -58,6 +58,11 @@ public final class ModuleManager {
         safeRegister(Triggerbot::new);
         safeRegister(HitAura::new);
         safeRegister(LegitAura::new);
+        safeRegister(WTap::new);
+        safeRegister(AimAssist::new);
+        safeRegister(SwapHit::new);
+        safeRegister(BreachSwap::new);
+        safeRegister(AutoMace::new);
 
         // Misc
         safeRegister(ArmorTrimHiderModule::new);
