@@ -7,6 +7,7 @@ import com.chukl.client.modules.client.hud.*;
 import com.chukl.client.modules.combat.*;
 import com.chukl.client.modules.donut.*;
 import com.chukl.client.modules.misc.*;
+import com.chukl.client.modules.render.*;
 import net.minecraft.client.gui.DrawContext;
 
 import java.util.ArrayList;
@@ -35,7 +36,6 @@ public final class ModuleManager {
         safeRegister(OGChunkFinder::new);
         safeRegister(SixSevenSusChunkFinder::new);
         safeRegister(AntiVanishModule::new);
-        safeRegister(StorageEspModule::new);
         safeRegister(BlockEspModule::new);
         safeRegister(SusChunkV2Module::new);
         safeRegister(ChunkFinderBetterModule::new);
@@ -87,6 +87,9 @@ public final class ModuleManager {
         safeRegister(StaffListModule::new);
         safeRegister(WeatherNotifierModule::new);
         safeRegister(ZoomModule::new);
+
+        // Render
+        safeRegister(StorageEspModule::new);
 
         ChuklClient.LOG.info("ModuleManager.init() registered {} modules", MODULES.size());
     }
