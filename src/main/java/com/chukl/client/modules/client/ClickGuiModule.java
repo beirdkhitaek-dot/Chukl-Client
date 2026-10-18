@@ -62,16 +62,17 @@ public class ClickGuiModule extends Module {
         return s;
     }
 
-    /** Header color for a panel, honoring Per-Category Colors. */
+    /** Header color for a panel, honoring Per-Category Colors. Addon-registered categories (anything past
+     *  the five built-in ones) have no dedicated color setting, so they fall back to the accent color. */
     public int headerColor(Category c) {
         if (!perCategory.get()) return accent.get() | 0xFF000000;
-        int col = switch (c) {
-            case COMBAT -> combatColor.get();
-            case MISC -> miscColor.get();
-            case DONUT -> donutColor.get();
-            case RENDER -> renderColor.get();
-            case CLIENT -> clientColor.get();
-        };
+        int col;
+        if (c == Category.COMBAT) col = combatColor.get();
+        else if (c == Category.MISC) col = miscColor.get();
+        else if (c == Category.DONUT) col = donutColor.get();
+        else if (c == Category.RENDER) col = renderColor.get();
+        else if (c == Category.CLIENT) col = clientColor.get();
+        else col = accent.get();
         return col | 0xFF000000;
     }
 

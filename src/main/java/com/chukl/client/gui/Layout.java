@@ -6,8 +6,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,7 +32,7 @@ public final class Layout {
         public int totalHeight() { return HEADER + (open ? h : 0); }
     }
 
-    public static final Map<Category, Panel> PANELS = new EnumMap<>(Category.class);
+    public static final Map<Category, Panel> PANELS = new LinkedHashMap<>();
     /** Draw order, last is on top. */
     public static final List<Category> ORDER = new ArrayList<>();
 
@@ -44,6 +44,18 @@ public final class Layout {
     }
 
     private Layout() { }
+
+    /**
+     * Makes sure a category has a panel, even if it was registered (e.g. by an addon) after this class
+     * already ran its static initializer. Registering a Category alone doesn't call this -- AddonManager
+     * does, right after an addon registers one, so addon panels show up without the addon needing to know
+     * Layout exists.
+     */
+    public static synchronized void ensureTracked(Category c) {
+        if (PANELS.containsKey(c)) return;
+        PANELS.put(c, new Panel(c));
+        ORDER.add(c);
+    }
 
     public static Panel get(Category c) { return PANELS.get(c); }
 

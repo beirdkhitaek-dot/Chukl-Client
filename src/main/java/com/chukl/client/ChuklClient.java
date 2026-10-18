@@ -1,9 +1,12 @@
 package com.chukl.client;
 
+import com.chukl.client.core.AddonManager;
+import com.chukl.client.core.Category;
 import com.chukl.client.core.Config;
 import com.chukl.client.core.Keys;
 import com.chukl.client.core.ModuleManager;
 import com.chukl.client.core.Render3D;
+import com.chukl.client.gui.Layout;
 import com.chukl.client.modules.client.ClickGuiModule;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
@@ -29,6 +32,10 @@ public class ChuklClient implements ClientModInitializer {
     public void onInitializeClient() {
         Config.init();
         ModuleManager.init();
+        AddonManager.init();
+        // Picks up any Category an addon registered for its own panel, even if Layout's class (and its
+        // snapshot of Category.values()) already loaded before AddonManager ran.
+        for (Category c : Category.values()) Layout.ensureTracked(c);
         Config.load();
 
         ClientTickEvents.END_CLIENT_TICK.register(mc -> {

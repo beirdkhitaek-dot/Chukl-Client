@@ -1,6 +1,7 @@
 # Chukl Client
 
-Fabric client mod for Minecraft 1.21.11. Needs only Fabric Loader and Fabric API.
+Fabric client mod for Minecraft 1.21.11. Needs only Fabric Loader and Fabric API. Open source (MIT) and
+addonable — see [ADDONS.md](ADDONS.md) to write your own addon, the same way you would for Meteor Client.
 
 - **Right Shift** opens the Click GUI (rebind it in the Click GUI module).
 - Categories: Combat, Misc, Donut, Render, Client.
@@ -17,6 +18,12 @@ Fabric client mod for Minecraft 1.21.11. Needs only Fabric Loader and Fabric API
 
 ## Build
 `gradle build` (Gradle 9.2, Java 21). The jar lands in `build/libs/`. See MODULES.md for adding modules.
+
+## Addons
+Modules aren't limited to this repo. An addon is its own Fabric mod depending on Chukl Client that declares
+a `chukl.addon` entrypoint; Chukl loads it and calls its `onInitialize()`, where it registers modules (and
+optionally its own Click GUI category) just like a built-in one. See [ADDONS.md](ADDONS.md) for the full
+walkthrough.
 
 ## Custom font
 Client > Fonts module > Font: Default, Unifont, Lemon Milk, Arial Bold, Xuong (bundled), or Custom. Custom uses `chuklclient:custom`, supplied by a resource pack. See `chukl-font-pack-template.zip`.
